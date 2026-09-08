@@ -22,7 +22,7 @@ setError('')
 setDelivery(null)
 
 const { data, error } = await supabase
-.from('deliveries')
+.from('Deliveries')
 .select(
 'tracking_number, collection_address, delivery_address, status, estimated_delivery, delivered_at, received_by'
 )
