@@ -1,4 +1,4 @@
-use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
@@ -36,7 +36,7 @@ window.location.href = "/login";
 return;
 }
 
-loadDeliveries();
+await loadDeliveries();
 }
 
 async function loadDeliveries() {
@@ -54,24 +54,27 @@ setDeliveries(data || []);
 }
 
 async function getNextTrackingNumber() {
-const { data } = await supabase
+const { data, error } = await supabase
 .from("Deliveries")
 .select("tracking_number")
 .order("id", { ascending: false })
 .limit(1);
 
-if (!data || data.length === 0) {
+if (error || !data || data.length === 0) {
 return "REC-1001";
 }
 
-const last = data[0]?.tracking_number || "REC-1000";
-const number = parseInt(last.replace("REC-", ""), 10);
+const lastTracking = data[0]?.tracking_number || "REC-1000";
+const lastNumber = parseInt(
+lastTracking.replace("REC-", ""),
+10
+);
 
-if (Number.isNaN(number)) {
+if (Number.isNaN(lastNumber)) {
 return "REC-1001";
 }
 
-return `REC-${String(number + 1).padStart(4, "0")}`;
+return `REC-${String(lastNumber + 1).padStart(4, "0")}`;
 }
 
 async function addDelivery(e) {
@@ -82,7 +85,9 @@ setMessage("");
 
 const trackingNumber = await getNextTrackingNumber();
 
-const { error } = await supabase.from("Deliveries").insert([
+const { error } = await supabase
+.from("Deliveries")
+.insert([
 {
 tracking_number: trackingNumber,
 customer_name: customerName.trim() || null,
@@ -110,7 +115,10 @@ setCollectionAddress("");
 setDeliveryAddress("");
 setEstimatedDelivery("");
 
-setMessage(`Delivery created successfully — ${trackingNumber}`);
+setMessage(
+`Delivery created successfully — ${trackingNumber}`
+);
+
 await loadDeliveries();
 setLoading(false);
 }
@@ -125,7 +133,10 @@ setPodFile(null);
 setTimeout(() => {
 document
 .getElementById("update-delivery")
-?.scrollIntoView({ behavior: "smooth" });
+?.scrollIntoView({
+behavior: "smooth",
+block: "start",
+});
 }, 100);
 }
 
@@ -133,7 +144,7 @@ async function updateDelivery(e) {
 e.preventDefault();
 
 if (!selectedTracking) {
-setMessage("Select a delivery first.");
+setMessage("Please select a delivery first.");
 return;
 }
 
@@ -146,7 +157,9 @@ status,
 
 if (status === "Delivered") {
 if (!receivedBy.trim()) {
-setMessage("Please enter who received the delivery.");
+setMessage(
+"Please enter the name of the person who received the delivery."
+);
 setLoading(false);
 return;
 }
@@ -161,31 +174,45 @@ error: userError,
 } = await supabase.auth.getUser();
 
 if (userError || !user) {
-setMessage("You need to be logged in to upload a POD photo.");
+setMessage(
+"You need to be logged in to upload a POD photo."
+);
 setLoading(false);
 return;
 }
 
 const extension =
-podFile.name?.split(".").pop()?.toLowerCase() || "jpg";
+podFile.name
+?.split(".")
+.pop()
+?.toLowerCase() || "jpg";
 
-const filePath = `${user.id}/${selectedTracking}-${Date.now()}.${extension}`;
+const filePath =
+`${user.id}/${selectedTracking}-${Date.now()}.${extension}`;
 
-const { error: uploadError } = await supabase.storage
+const { error: uploadError } =
+await supabase.storage
 .from("pod-photos")
-.upload(filePath, podFile);
+.upload(filePath, podFile, {
+upsert: false,
+});
 
 if (uploadError) {
-setMessage("Photo upload failed: " + uploadError.message);
+setMessage(
+"POD photo upload failed: " +
+uploadError.message
+);
 setLoading(false);
 return;
 }
 
-const { data: publicData } = supabase.storage
+const { data: publicUrlData } =
+supabase.storage
 .from("pod-photos")
 .getPublicUrl(filePath);
 
-updates.pod_photo = publicData.publicUrl;
+updates.pod_photo =
+publicUrlData.publicUrl;
 }
 }
 
@@ -195,12 +222,17 @@ const { error } = await supabase
 .eq("tracking_number", selectedTracking);
 
 if (error) {
-setMessage("Could not update delivery: " + error.message);
+setMessage(
+"Could not update delivery: " + error.message
+);
 setLoading(false);
 return;
 }
 
-setMessage(`${selectedTracking} updated successfully.`);
+setMessage(
+`${selectedTracking} updated successfully.`
+);
+
 await loadDeliveries();
 setLoading(false);
 }
@@ -213,53 +245,76 @@ window.location.href = "/login";
 const inputStyle = {
 width: "100%",
 boxSizing: "border-box",
-padding: "12px",
-marginBottom: "12px",
+padding: "13px",
+marginBottom: "14px",
 fontSize: "16px",
 borderRadius: "6px",
 border: "1px solid #ccc",
 };
 
-const buttonStyle = {
+const primaryButton = {
 width: "100%",
-padding: "14px",
+padding: "15px",
 border: "none",
 borderRadius: "6px",
 backgroundColor: "#e53935",
-color: "#fff",
+color: "#ffffff",
 fontWeight: "bold",
 fontSize: "16px",
 cursor: "pointer",
+};
+
+const sectionStyle = {
+backgroundColor: "#2b2b2b",
+padding: "20px",
+borderRadius: "10px",
+marginBottom: "30px",
 };
 
 return (
 <main
 style={{
 minHeight: "100vh",
-background: "#1f1f1f",
-color: "#fff",
+backgroundColor: "#1f1f1f",
+color: "#ffffff",
 padding: "20px",
 fontFamily: "Arial, sans-serif",
 }}
 >
-<div style={{ maxWidth: "800px", margin: "0 auto" }}>
-<h1 style={{ marginBottom: "5px" }}>
+<div
+style={{
+width: "100%",
+maxWidth: "800px",
+margin: "0 auto",
+}}
+>
+<h1
+style={{
+marginBottom: "5px",
+}}
+>
 Richmond Express Couriers
 </h1>
 
-<h2 style={{ marginTop: "0", marginBottom: "20px" }}>
+<h2
+style={{
+marginTop: "0",
+marginBottom: "20px",
+}}
+>
 Admin Dashboard
 </h2>
 
 <button
+type="button"
 onClick={signOut}
 style={{
-marginBottom: "25px",
 padding: "10px 18px",
-border: "1px solid #fff",
-background: "transparent",
-color: "#fff",
+marginBottom: "25px",
+border: "1px solid #ffffff",
 borderRadius: "6px",
+backgroundColor: "transparent",
+color: "#ffffff",
 cursor: "pointer",
 }}
 >
@@ -269,9 +324,9 @@ Sign Out
 {message && (
 <div
 style={{
-padding: "12px",
+padding: "13px",
 marginBottom: "20px",
-background: "#333",
+backgroundColor: "#333333",
 borderRadius: "6px",
 }}
 >
@@ -279,44 +334,47 @@ borderRadius: "6px",
 </div>
 )}
 
-<section
-style={{
-background: "#2b2b2b",
-padding: "20px",
-borderRadius: "10px",
-marginBottom: "30px",
-}}
->
+<section style={sectionStyle}>
 <h2>Add Delivery</h2>
 
 <form onSubmit={addDelivery}>
 <input
+type="text"
 style={inputStyle}
 placeholder="Customer name"
 value={customerName}
-onChange={(e) => setCustomerName(e.target.value)}
+onChange={(e) =>
+setCustomerName(e.target.value)
+}
 />
 
 <input
+type="tel"
 style={inputStyle}
 placeholder="Customer phone"
 value={customerPhone}
-onChange={(e) => setCustomerPhone(e.target.value)}
+onChange={(e) =>
+setCustomerPhone(e.target.value)
+}
 />
 
 <input
-style={inputStyle}
 type="email"
+style={inputStyle}
 placeholder="Customer email"
 value={customerEmail}
-onChange={(e) => setCustomerEmail(e.target.value)}
+onChange={(e) =>
+setCustomerEmail(e.target.value)
+}
 />
 
 <textarea
 style={inputStyle}
 placeholder="Delivery notes"
 value={deliveryNotes}
-onChange={(e) => setDeliveryNotes(e.target.value)}
+onChange={(e) =>
+setDeliveryNotes(e.target.value)
+}
 />
 
 <textarea
@@ -324,7 +382,9 @@ style={inputStyle}
 placeholder="Collection address"
 required
 value={collectionAddress}
-onChange={(e) => setCollectionAddress(e.target.value)}
+onChange={(e) =>
+setCollectionAddress(e.target.value)
+}
 />
 
 <textarea
@@ -332,92 +392,139 @@ style={inputStyle}
 placeholder="Delivery address"
 required
 value={deliveryAddress}
-onChange={(e) => setDeliveryAddress(e.target.value)}
+onChange={(e) =>
+setDeliveryAddress(e.target.value)
+}
 />
 
-<label style={{ display: "block", marginBottom: "6px" }}>
+<label
+style={{
+display: "block",
+marginBottom: "7px",
+}}
+>
 Estimated delivery
 </label>
 
 <input
-style={inputStyle}
 type="datetime-local"
+style={inputStyle}
 value={estimatedDelivery}
-onChange={(e) => setEstimatedDelivery(e.target.value)}
+onChange={(e) =>
+setEstimatedDelivery(e.target.value)
+}
 />
 
-<button style={buttonStyle} type="submit" disabled={loading}>
-{loading ? "Saving..." : "Create Delivery"}
+<button
+type="submit"
+disabled={loading}
+style={primaryButton}
+>
+{loading
+? "Saving..."
+: "Create Delivery"}
 </button>
 </form>
 </section>
 
 <section
 id="update-delivery"
-style={{
-background: "#2b2b2b",
-padding: "20px",
-borderRadius: "10px",
-marginBottom: "30px",
-}}
+style={sectionStyle}
 >
 <h2>Update Delivery</h2>
 
 {!selectedTracking ? (
-<p>Select a delivery from the list below.</p>
+<p>
+Select a delivery from the list below.
+</p>
 ) : (
 <form onSubmit={updateDelivery}>
 <p>
-<strong>Tracking:</strong> {selectedTracking}
+<strong>Tracking number:</strong>{" "}
+{selectedTracking}
 </p>
 
-<label style={{ display: "block", marginBottom: "6px" }}>
+<label
+style={{
+display: "block",
+marginBottom: "7px",
+}}
+>
 Status
 </label>
 
 <select
 style={inputStyle}
 value={status}
-onChange={(e) => setStatus(e.target.value)}
+onChange={(e) =>
+setStatus(e.target.value)
+}
 >
-<option>Booked</option>
-<option>Collected</option>
-<option>In Transit</option>
-<option>Delivered</option>
+<option value="Booked">
+Booked
+</option>
+<option value="Collected">
+Collected
+</option>
+<option value="In Transit">
+In Transit
+</option>
+<option value="Delivered">
+Delivered
+</option>
 </select>
 
 {status === "Delivered" && (
 <>
 <input
+type="text"
 style={inputStyle}
 placeholder="Received by"
 value={receivedBy}
-onChange={(e) => setReceivedBy(e.target.value)}
+onChange={(e) =>
+setReceivedBy(e.target.value)
+}
 />
 
-<label style={{ display: "block", marginBottom: "8px" }}>
+<label
+style={{
+display: "block",
+marginBottom: "8px",
+}}
+>
 Proof of delivery photo
 </label>
 
 <input
-style={inputStyle}
 type="file"
 accept="image/*"
 capture="environment"
+style={inputStyle}
 onChange={(e) =>
-setPodFile(e.target.files?.[0] || null)
+setPodFile(
+e.target.files?.[0] || null
+)
 }
 />
 
 {existingPod && (
-<div style={{ marginBottom: "15px" }}>
-<p>Existing POD:</p>
+<div
+style={{
+marginBottom: "18px",
+}}
+>
+<p>
+Existing proof of delivery:
+</p>
+
 <img
 src={existingPod}
 alt="Proof of delivery"
 style={{
-maxWidth: "100%",
-maxHeight: "300px",
+width: "100%",
+maxWidth: "450px",
+maxHeight: "350px",
+objectFit: "contain",
 borderRadius: "8px",
 }}
 />
@@ -426,8 +533,14 @@ borderRadius: "8px",
 </>
 )}
 
-<button style={buttonStyle} type="submit" disabled={loading}>
-{loading ? "Updating..." : "Update Delivery"}
+<button
+type="submit"
+disabled={loading}
+style={primaryButton}
+>
+{loading
+? "Updating..."
+: "Update Delivery"}
 </button>
 </form>
 )}
@@ -441,25 +554,42 @@ borderRadius: "8px",
 ) : (
 deliveries.map((delivery) => (
 <div
-key={delivery.id || delivery.tracking_number}
+key={
+delivery.id ||
+delivery.tracking_number
+}
 style={{
-background: "#2b2b2b",
+backgroundColor: "#2b2b2b",
 padding: "18px",
 marginBottom: "14px",
 borderRadius: "10px",
 }}
 >
-<h3 style={{ marginTop: "0" }}>
+<h3
+style={{
+marginTop: "0",
+marginBottom: "12px",
+}}
+>
 {delivery.tracking_number}
 </h3>
 
 <p>
-<strong>Status:</strong> {delivery.status}
+<strong>Status:</strong>{" "}
+{delivery.status}
 </p>
 
 {delivery.customer_name && (
 <p>
-<strong>Customer:</strong> {delivery.customer_name}
+<strong>Customer:</strong>{" "}
+{delivery.customer_name}
+</p>
+)}
+
+{delivery.customer_phone && (
+<p>
+<strong>Phone:</strong>{" "}
+{delivery.customer_phone}
 </p>
 )}
 
@@ -480,14 +610,23 @@ borderRadius: "10px",
 </p>
 )}
 
+{delivery.pod_photo && (
+<p>
+Proof of delivery available
+</p>
+)}
+
 <button
-onClick={() => selectDelivery(delivery)}
+type="button"
+onClick={() =>
+selectDelivery(delivery)
+}
 style={{
-padding: "10px 15px",
+padding: "11px 16px",
 border: "none",
 borderRadius: "6px",
-background: "#e53935",
-color: "#fff",
+backgroundColor: "#e53935",
+color: "#ffffff",
 fontWeight: "bold",
 cursor: "pointer",
 }}
