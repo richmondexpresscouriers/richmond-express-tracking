@@ -9,7 +9,7 @@ const [status, setStatus] = useState("Booked");
 const [message, setMessage] = useState("");
 const [loading, setLoading] = useState(false);
 
-const [newTrackingNumber, setNewTrackingNumber] = useState("");
+
 const [customerName, setCustomerName] = useState("");
 const [collectionAddress, setCollectionAddress] = useState("");
 const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -19,7 +19,33 @@ e.preventDefault();
 setLoading(true);
 setMessage("");
 
-const number = newTrackingNumber.trim().toUpperCase();
+const { data: latestDelivery, error: lookupError } = await supabase
+.from("Deliveries")
+.select("tracking_number")
+.order("tracking_number", { ascending: false })
+.limit(1)
+.maybeSingle();
+
+if (lookupError) {
+setMessage("Error: " + lookupError.message);
+setLoading(false);
+return;
+}
+
+let nextNumber = 1001;
+
+if (latestDelivery?.tracking_number) {
+const currentNumber = parseInt(
+latestDelivery.tracking_number.replace("REC-", ""),
+10
+);
+
+if (!Number.isNaN(currentNumber)) {
+nextNumber = currentNumber + 1;
+}
+}
+
+const number = `REC-${String(nextNumber).padStart(4, "0")}`;
 
 if (!number || !collectionAddress || !deliveryAddress) {
 setMessage("Please fill in the required delivery details.");
@@ -42,7 +68,7 @@ if (error) {
 setMessage("Error: " + error.message);
 } else {
 setMessage(number + " created successfully");
-setNewTrackingNumber("");
+
 setCustomerName("");
 setCollectionAddress("");
 setDeliveryAddress("");
@@ -112,18 +138,7 @@ borderRadius: "15px",
 <h2 style={{ marginTop: "30px" }}>Add New Delivery</h2>
 
 <form onSubmit={addDelivery}>
-<p>Tracking number</p>
-<input
-value={newTrackingNumber}
-onChange={(e) => setNewTrackingNumber(e.target.value)}
-placeholder="REC-1002"
-style={{
-width: "100%",
-padding: "15px",
-fontSize: "16px",
-boxSizing: "border-box",
-}}
-/>
+
 
 <p>Customer name</p>
 <input
