@@ -318,8 +318,7 @@ Select Delivery
 </button>
 </div>
 ))
-)}
-  </div>
+ </div>
 </main>
 );
 }
