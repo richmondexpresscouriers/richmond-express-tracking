@@ -9,16 +9,32 @@ const [status, setStatus] = useState("Booked");
 const [message, setMessage] = useState("");
 const [loading, setLoading] = useState(false);
 
-
 const [customerName, setCustomerName] = useState("");
 const [collectionAddress, setCollectionAddress] = useState("");
 const [deliveryAddress, setDeliveryAddress] = useState("");
-const [estimatedDelivery, setEstimatedDelivery] = useState("");  
-  const [delieveries, setDeliveries] = useState([]);
+const [estimatedDelivery, setEstimatedDelivery] = useState("");
+
+const [deliveries, setDeliveries] = useState([]);
+
+async function loadDeliveries() {
+const { data, error } = await supabase
+.from("Deliveries")
+.select("*")
+.order("tracking_number", { ascending: false });
+
+if (error) {
+setMessage("Error: " + error.message);
+return;
+}
+
+setDeliveries(data || []);
+}
+
 useEffect(() => {
 loadDeliveries();
 }, []);
-  async function addDelivery(e) {
+
+async function addDelivery(e) {
 e.preventDefault();
 setLoading(true);
 setMessage("");
@@ -51,15 +67,13 @@ nextNumber = currentNumber + 1;
 
 const number = `REC-${String(nextNumber).padStart(4, "0")}`;
 
-if (!number || !collectionAddress || !deliveryAddress) {
+if (!collectionAddress || !deliveryAddress) {
 setMessage("Please fill in the required delivery details.");
 setLoading(false);
 return;
 }
 
-const { error } = await supabase
-.from("Deliveries")
-.insert({
+const { error } = await supabase.from("Deliveries").insert({
 tracking_number: number,
 customer_number: customerName,
 collection_address: collectionAddress,
@@ -72,6 +86,7 @@ if (error) {
 setMessage("Error: " + error.message);
 } else {
 setMessage(number + " created successfully");
+
 await loadDeliveries();
 
 setCustomerName("");
@@ -82,19 +97,7 @@ setEstimatedDelivery("");
 
 setLoading(false);
 }
-  async function loadDeliveries() {
-const { data, error } = await supabase
-.from("Deliveries")
-.select("*")
-.order("tracking_number", { ascending: false });
 
-if (error) {
-setMessage("Error: " + error.message);
-return;
-}
-
-setDeliveries(data || []);
-}
 async function updateDelivery(e) {
 e.preventDefault();
 setLoading(true);
@@ -126,11 +129,9 @@ if (error) {
 setMessage("Error: " + error.message);
 } else if (!data || data.length === 0) {
 setMessage("Tracking number not found.");
-
-  } else {
+} else {
 setMessage(number + " updated to " + status);
 await loadDeliveries();
-}
 }
 
 setLoading(false);
@@ -147,55 +148,52 @@ padding: "40px 20px",
 >
 <div
 style={{
-maxWidth: "600px",
+maxWidth: "700px",
 margin: "0 auto",
-background: "#444",
-padding: "30px",
-borderRadius: "15px",
 }}
 >
-<h1>Richmond Express Couriers</h1>
-<h2>Delivery Admin</h2>
-<h2 style={{ marginTop: "30px" }}>Add New Delivery</h2>
+<h1>Delivery Admin</h1>
+
+<h2>Add New Delivery</h2>
 
 <form onSubmit={addDelivery}>
-
-
 <p>Customer name</p>
 <input
+type="text"
 value={customerName}
 onChange={(e) => setCustomerName(e.target.value)}
 placeholder="Customer name"
 style={{
 width: "100%",
 padding: "15px",
-fontSize: "16px",
 boxSizing: "border-box",
 }}
 />
 
 <p>Collection address</p>
 <input
+type="text"
 value={collectionAddress}
 onChange={(e) => setCollectionAddress(e.target.value)}
 placeholder="Collection address"
+required
 style={{
 width: "100%",
 padding: "15px",
-fontSize: "16px",
 boxSizing: "border-box",
 }}
 />
 
 <p>Delivery address</p>
 <input
+type="text"
 value={deliveryAddress}
 onChange={(e) => setDeliveryAddress(e.target.value)}
 placeholder="Delivery address"
+required
 style={{
 width: "100%",
 padding: "15px",
-fontSize: "16px",
 boxSizing: "border-box",
 }}
 />
@@ -208,7 +206,6 @@ onChange={(e) => setEstimatedDelivery(e.target.value)}
 style={{
 width: "100%",
 padding: "15px",
-fontSize: "16px",
 boxSizing: "border-box",
 }}
 />
@@ -233,30 +230,30 @@ cursor: "pointer",
 </form>
 
 <hr style={{ margin: "35px 0" }} />
+
+<h2>Update Delivery</h2>
+
 <form onSubmit={updateDelivery}>
 <p>Tracking number</p>
-
 <input
+type="text"
 value={trackingNumber}
 onChange={(e) => setTrackingNumber(e.target.value)}
 placeholder="REC-1001"
 style={{
 width: "100%",
 padding: "15px",
-fontSize: "16px",
 boxSizing: "border-box",
 }}
 />
 
 <p>Status</p>
-
 <select
 value={status}
 onChange={(e) => setStatus(e.target.value)}
 style={{
 width: "100%",
 padding: "15px",
-fontSize: "16px",
 boxSizing: "border-box",
 }}
 >
@@ -285,7 +282,12 @@ cursor: "pointer",
 </button>
 </form>
 
-{message && <p style={{ marginTop: "25px" }}>{message}</p>}
+{message && (
+<p style={{ marginTop: "25px" }}>
+{message}
+</p>
+)}
+
 <hr style={{ margin: "35px 0" }} />
 
 <h2>Current Deliveries</h2>
@@ -303,23 +305,38 @@ border: "1px solid #ccc",
 }}
 >
 <strong>{delivery.tracking_number}</strong>
+
 <p>Status: {delivery.status}</p>
-<p>Collection: {delivery.collection_address}</p>
-<p>Delivery: {delivery.delivery_address}</p>
+
+<p>
+Collection: {delivery.collection_address}
+</p>
+
+<p>
+Delivery: {delivery.delivery_address}
+</p>
 
 <button
 type="button"
 onClick={() => {
 setTrackingNumber(delivery.tracking_number);
 setStatus(delivery.status);
+window.scrollTo({
+top: 0,
+behavior: "smooth",
+});
+}}
+style={{
+padding: "10px 15px",
+cursor: "pointer",
 }}
 >
 Select Delivery
 </button>
 </div>
-  ))
+))
 )}
- </div>
+</div>
 </main>
 );
 }
