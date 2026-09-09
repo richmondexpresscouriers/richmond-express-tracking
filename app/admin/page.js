@@ -9,6 +9,48 @@ const [status, setStatus] = useState("Booked");
 const [message, setMessage] = useState("");
 const [loading, setLoading] = useState(false);
 
+const [newTrackingNumber, setNewTrackingNumber] = useState("");
+const [customerName, setCustomerName] = useState("");
+const [collectionAddress, setCollectionAddress] = useState("");
+const [deliveryAddress, setDeliveryAddress] = useState("");
+const [estimatedDelivery, setEstimatedDelivery] = useState("");  
+async function addDelivery(e) {
+e.preventDefault();
+setLoading(true);
+setMessage("");
+
+const number = newTrackingNumber.trim().toUpperCase();
+
+if (!number || !collectionAddress || !deliveryAddress) {
+setMessage("Please fill in the required delivery details.");
+setLoading(false);
+return;
+}
+
+const { error } = await supabase
+.from("Deliveries")
+.insert({
+tracking_number: number,
+customer_number: customerName,
+collection_address: collectionAddress,
+delivery_address: deliveryAddress,
+estimated_delivery: estimatedDelivery || null,
+status: "Booked",
+});
+
+if (error) {
+setMessage("Error: " + error.message);
+} else {
+setMessage(number + " created successfully");
+setNewTrackingNumber("");
+setCustomerName("");
+setCollectionAddress("");
+setDeliveryAddress("");
+setEstimatedDelivery("");
+}
+
+setLoading(false);
+}
 async function updateDelivery(e) {
 e.preventDefault();
 setLoading(true);
@@ -67,7 +109,94 @@ borderRadius: "15px",
 >
 <h1>Richmond Express Couriers</h1>
 <h2>Delivery Admin</h2>
+<h2 style={{ marginTop: "30px" }}>Add New Delivery</h2>
 
+<form onSubmit={addDelivery}>
+<p>Tracking number</p>
+<input
+value={newTrackingNumber}
+onChange={(e) => setNewTrackingNumber(e.target.value)}
+placeholder="REC-1002"
+style={{
+width: "100%",
+padding: "15px",
+fontSize: "16px",
+boxSizing: "border-box",
+}}
+/>
+
+<p>Customer name</p>
+<input
+value={customerName}
+onChange={(e) => setCustomerName(e.target.value)}
+placeholder="Customer name"
+style={{
+width: "100%",
+padding: "15px",
+fontSize: "16px",
+boxSizing: "border-box",
+}}
+/>
+
+<p>Collection address</p>
+<input
+value={collectionAddress}
+onChange={(e) => setCollectionAddress(e.target.value)}
+placeholder="Collection address"
+style={{
+width: "100%",
+padding: "15px",
+fontSize: "16px",
+boxSizing: "border-box",
+}}
+/>
+
+<p>Delivery address</p>
+<input
+value={deliveryAddress}
+onChange={(e) => setDeliveryAddress(e.target.value)}
+placeholder="Delivery address"
+style={{
+width: "100%",
+padding: "15px",
+fontSize: "16px",
+boxSizing: "border-box",
+}}
+/>
+
+<p>Estimated delivery</p>
+<input
+type="datetime-local"
+value={estimatedDelivery}
+onChange={(e) => setEstimatedDelivery(e.target.value)}
+style={{
+width: "100%",
+padding: "15px",
+fontSize: "16px",
+boxSizing: "border-box",
+}}
+/>
+
+<button
+type="submit"
+disabled={loading}
+style={{
+width: "100%",
+padding: "15px",
+marginTop: "25px",
+background: "#ff4b3e",
+color: "white",
+border: "none",
+fontSize: "16px",
+fontWeight: "bold",
+cursor: "pointer",
+}}
+>
+{loading ? "Creating..." : "Add Delivery"}
+</button>
+</form>
+
+<hr style={{ margin: "35px 0" }} />
 <form onSubmit={updateDelivery}>
 <p>Tracking number</p>
 
