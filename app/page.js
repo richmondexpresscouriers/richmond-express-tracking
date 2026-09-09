@@ -115,7 +115,7 @@ justifyContent: "space-between",
 marginBottom: "8px",
 fontWeight: "bold"
 }}>
-<span>Booked</span>
+<span>Booked ✓</span>
 <span>Collected</span>
 <span>In Transit</span>
 <span>Delivered</span>
