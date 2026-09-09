@@ -29,10 +29,12 @@ const { data, error } = await supabase
 .eq('tracking_number', trackingNumber.trim())
 .maybeSingle()
 
-if (error || !data) {
-setError('Tracking number not found.')
-} else {
-setDelivery(data)
+if (error) {
+  setError(error.message)
+} else if (!data) {
+  setError('Tracking number not found.')
+} else { 
+  setDelivery(data)
 }
 
 setLoading(false)
