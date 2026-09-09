@@ -108,6 +108,37 @@ cursor: 'pointer'
 <p>
 <strong>Status:</strong> {delivery.status}
 </p>
+<div style={{ margin: "20px 0" }}>
+<div style={{
+display: "flex",
+justifyContent: "space-between",
+marginBottom: "8px",
+fontWeight: "bold"
+}}>
+<span>Booked</span>
+<span>Collected</span>
+<span>In Transit</span>
+<span>Delivered</span>
+</div>
+
+<div style={{
+height: "8px",
+background: "#555",
+borderRadius: "10px",
+overflow: "hidden"
+}}>
+<div style={{
+height: "100%",
+background: "#ff4b3e",
+borderRadius: "10px",
+width:
+delivery.status === "Delivered" ? "100%" :
+delivery.status === "In Transit" ? "67%" :
+delivery.status === "Collected" ? "34%" :
+"10%"
+}} />
+</div>
+</div>
 
 <p>
 <strong>Collection:</strong> {delivery.collection_address}
