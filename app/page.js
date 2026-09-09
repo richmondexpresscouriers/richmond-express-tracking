@@ -120,7 +120,7 @@ cursor: 'pointer'
 {delivery.estimated_delivery && (
 <p>
 <strong>Estimated delivery:</strong>{' '}
-{new Date(delivery.estimated_delivery).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', miniute '2-digit' })
+{new Date(delivery.estimated_delivery).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
 </p>
 )}
 
