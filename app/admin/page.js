@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function AdminPage() {
@@ -14,7 +14,11 @@ const [customerName, setCustomerName] = useState("");
 const [collectionAddress, setCollectionAddress] = useState("");
 const [deliveryAddress, setDeliveryAddress] = useState("");
 const [estimatedDelivery, setEstimatedDelivery] = useState("");  
-async function addDelivery(e) {
+  const [delieveries, setDeliveries] = useState([]);
+useEffect(() => {
+loadDeliveries();
+}, []);
+  async function addDelivery(e) {
 e.preventDefault();
 setLoading(true);
 setMessage("");
@@ -68,6 +72,7 @@ if (error) {
 setMessage("Error: " + error.message);
 } else {
 setMessage(number + " created successfully");
+await loadDeliveries();
 
 setCustomerName("");
 setCollectionAddress("");
@@ -76,6 +81,19 @@ setEstimatedDelivery("");
 }
 
 setLoading(false);
+}
+  async function loadDeliveries() {
+const { data, error } = await supabase
+.from("Deliveries")
+.select("*")
+.order("tracking_number", { ascending: false });
+
+if (error) {
+setMessage("Error: " + error.message);
+return;
+}
+
+setDeliveries(data || []);
 }
 async function updateDelivery(e) {
 e.preventDefault();
@@ -108,8 +126,11 @@ if (error) {
 setMessage("Error: " + error.message);
 } else if (!data || data.length === 0) {
 setMessage("Tracking number not found.");
-} else {
+
+  } else {
 setMessage(number + " updated to " + status);
+await loadDeliveries();
+}
 }
 
 setLoading(false);
@@ -265,7 +286,40 @@ cursor: "pointer",
 </form>
 
 {message && <p style={{ marginTop: "25px" }}>{message}</p>}
+<hr style={{ margin: "35px 0" }} />
+
+<h2>Current Deliveries</h2>
+
+{deliveries.length === 0 ? (
+<p>No deliveries found.</p>
+) : (
+deliveries.map((delivery) => (
+<div
+key={delivery.tracking_number}
+style={{
+padding: "15px",
+marginBottom: "15px",
+border: "1px solid #ccc",
+}}
+>
+<strong>{delivery.tracking_number}</strong>
+<p>Status: {delivery.status}</p>
+<p>Collection: {delivery.collection_address}</p>
+<p>Delivery: {delivery.delivery_address}</p>
+
+<button
+type="button"
+onClick={() => {
+setTrackingNumber(delivery.tracking_number);
+setStatus(delivery.status);
+}}
+>
+Select Delivery
+</button>
 </div>
+))
+)}
+  </div>
 </main>
 );
 }
