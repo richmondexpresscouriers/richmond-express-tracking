@@ -14,6 +14,10 @@ const [collectionAddress, setCollectionAddress] = useState("");
 const [deliveryAddress, setDeliveryAddress] = useState("");
 const [estimatedDelivery, setEstimatedDelivery] = useState("");
 
+const [receivedBy, setReceivedBy] = useState("");
+const [podFile, setPodFile] = useState(null);
+const [existingPodUrl, setExistingPodUrl] = useState("");
+
 const [deliveries, setDeliveries] = useState([]);
 
 async function loadDeliveries() {
@@ -98,6 +102,45 @@ setEstimatedDelivery("");
 setLoading(false);
 }
 
+async function uploadPodPhoto(number) {
+if (!podFile) {
+return existingPodUrl || null;
+}
+
+const {
+data: { user },
+error: userError,
+} = await supabase.auth.getUser();
+
+if (userError || !user) {
+throw new Error("You must be logged in to upload a POD photo.");
+}
+
+const extension =
+podFile.name && podFile.name.includes(".")
+? podFile.name.split(".").pop()
+: "jpg";
+
+const filePath = `${user.id}/${number}-${Date.now()}.${extension}`;
+
+const { error: uploadError } = await supabase.storage
+.from("pod-photos")
+.upload(filePath, podFile, {
+cacheControl: "3600",
+upsert: false,
+});
+
+if (uploadError) {
+throw uploadError;
+}
+
+const { data } = supabase.storage
+.from("pod-photos")
+.getPublicUrl(filePath);
+
+return data.publicUrl;
+}
+
 async function updateDelivery(e) {
 e.preventDefault();
 setLoading(true);
@@ -111,10 +154,29 @@ setLoading(false);
 return;
 }
 
-const updates = { status };
+const updates = {
+status,
+};
 
+try {
 if (status === "Delivered") {
+if (!receivedBy.trim()) {
+setMessage("Please enter who received the delivery.");
+setLoading(false);
+return;
+}
+
+if (!podFile && !existingPodUrl) {
+setMessage("Please add a proof of delivery photo.");
+setLoading(false);
+return;
+}
+
+const photoUrl = await uploadPodPhoto(number);
+
 updates.delivered_at = new Date().toISOString();
+updates.received_by = receivedBy.trim();
+updates.pod_photo = photoUrl;
 } else {
 updates.delivered_at = null;
 }
@@ -131,7 +193,17 @@ setMessage("Error: " + error.message);
 setMessage("Tracking number not found.");
 } else {
 setMessage(number + " updated to " + status);
+
+setPodFile(null);
+
+if (data[0]?.pod_photo) {
+setExistingPodUrl(data[0].pod_photo);
+}
+
 await loadDeliveries();
+}
+} catch (error) {
+setMessage("Error: " + error.message);
 }
 
 setLoading(false);
@@ -158,6 +230,7 @@ margin: "0 auto",
 
 <form onSubmit={addDelivery}>
 <p>Customer name</p>
+
 <input
 type="text"
 value={customerName}
@@ -171,6 +244,7 @@ boxSizing: "border-box",
 />
 
 <p>Collection address</p>
+
 <input
 type="text"
 value={collectionAddress}
@@ -185,6 +259,7 @@ boxSizing: "border-box",
 />
 
 <p>Delivery address</p>
+
 <input
 type="text"
 value={deliveryAddress}
@@ -199,6 +274,7 @@ boxSizing: "border-box",
 />
 
 <p>Estimated delivery</p>
+
 <input
 type="datetime-local"
 value={estimatedDelivery}
@@ -235,6 +311,7 @@ cursor: "pointer",
 
 <form onSubmit={updateDelivery}>
 <p>Tracking number</p>
+
 <input
 type="text"
 value={trackingNumber}
@@ -248,6 +325,7 @@ boxSizing: "border-box",
 />
 
 <p>Status</p>
+
 <select
 value={status}
 onChange={(e) => setStatus(e.target.value)}
@@ -262,6 +340,50 @@ boxSizing: "border-box",
 <option>In Transit</option>
 <option>Delivered</option>
 </select>
+
+{status === "Delivered" && (
+<>
+<h3 style={{ marginTop: "30px" }}>
+Proof of Delivery
+</h3>
+
+<p>Received by</p>
+
+<input
+type="text"
+value={receivedBy}
+onChange={(e) => setReceivedBy(e.target.value)}
+placeholder="Name of person receiving delivery"
+style={{
+width: "100%",
+padding: "15px",
+boxSizing: "border-box",
+}}
+/>
+
+<p>POD photo</p>
+
+<input
+type="file"
+accept="image/*"
+capture="environment"
+onChange={(e) =>
+setPodFile(e.target.files?.[0] || null)
+}
+style={{
+width: "100%",
+padding: "15px 0",
+}}
+/>
+
+{existingPodUrl && !podFile && (
+<p>
+Existing POD photo saved. Choose another photo
+only if you want to replace it.
+</p>
+)}
+</>
+)}
 
 <button
 type="submit"
@@ -283,7 +405,12 @@ cursor: "pointer",
 </form>
 
 {message && (
-<p style={{ marginTop: "25px" }}>
+<p
+style={{
+marginTop: "25px",
+fontWeight: "bold",
+}}
+>
 {message}
 </p>
 )}
@@ -311,14 +438,66 @@ border: "1px solid #ccc",
 )}
 
 <p>Status: {delivery.status}</p>
-<p>Collection: {delivery.collection_address}</p>
-<p>Delivery: {delivery.delivery_address}</p>
+
+<p>
+Collection: {delivery.collection_address}
+</p>
+
+<p>
+Delivery: {delivery.delivery_address}
+</p>
+
+{delivery.status === "Delivered" &&
+delivery.received_by && (
+<p>
+Received by: {delivery.received_by}
+</p>
+)}
+
+{delivery.status === "Delivered" &&
+delivery.delivered_at && (
+<p>
+Delivered:{" "}
+{new Date(
+delivery.delivered_at
+).toLocaleString("en-GB")}
+</p>
+)}
+
+{delivery.pod_photo && (
+<p>
+<a
+href={delivery.pod_photo}
+target="_blank"
+rel="noreferrer"
+style={{ color: "white" }}
+>
+View POD Photo
+</a>
+</p>
+)}
 
 <button
 type="button"
 onClick={() => {
-setTrackingNumber(delivery.tracking_number);
-setStatus(delivery.status);
+setTrackingNumber(
+delivery.tracking_number
+);
+
+setStatus(
+delivery.status || "Booked"
+);
+
+setReceivedBy(
+delivery.received_by || ""
+);
+
+setExistingPodUrl(
+delivery.pod_photo || ""
+);
+
+setPodFile(null);
+
 window.scrollTo({
 top: 0,
 behavior: "smooth",
