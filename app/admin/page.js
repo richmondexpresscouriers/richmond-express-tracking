@@ -317,7 +317,8 @@ setStatus(delivery.status);
 Select Delivery
 </button>
 </div>
-))
+  ))
+)}
  </div>
 </main>
 );
