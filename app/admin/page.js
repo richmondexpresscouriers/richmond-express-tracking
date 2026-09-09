@@ -75,7 +75,7 @@ return;
 
 const { error } = await supabase.from("Deliveries").insert({
 tracking_number: number,
-customer_number: customerName,
+customer_name: customerName,
 collection_address: collectionAddress,
 delivery_address: deliveryAddress,
 estimated_delivery: estimatedDelivery || null,
@@ -306,15 +306,13 @@ border: "1px solid #ccc",
 >
 <strong>{delivery.tracking_number}</strong>
 
+{delivery.customer_name && (
+<p>Customer: {delivery.customer_name}</p>
+)}
+
 <p>Status: {delivery.status}</p>
-
-<p>
-Collection: {delivery.collection_address}
-</p>
-
-<p>
-Delivery: {delivery.delivery_address}
-</p>
+<p>Collection: {delivery.collection_address}</p>
+<p>Delivery: {delivery.delivery_address}</p>
 
 <button
 type="button"
