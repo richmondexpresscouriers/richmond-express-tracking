@@ -31,7 +31,7 @@ updates.delivered_at = null;
 }
 
 const { data, error } = await supabase
-.from("deliveries")
+.from("Deliveries")
 .update(updates)
 .eq("tracking_number", number)
 .select();
