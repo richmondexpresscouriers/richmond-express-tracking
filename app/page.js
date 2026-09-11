@@ -51,12 +51,7 @@ setDelivery(data);
 setLoading(false);
 }
 
-const stages = [
-"Booked",
-"Collected",
-"In Transit",
-"Delivered",
-];
+const stages = ["Booked", "Collected", "In Transit", "Delivered"];
 
 const currentStageIndex = delivery
 ? stages.indexOf(delivery.status)
@@ -72,6 +67,226 @@ year: "numeric",
 hour: "2-digit",
 minute: "2-digit",
 });
+}
+
+function downloadPOD() {
+if (!delivery) return;
+
+const podWindow = window.open("", "_blank");
+
+if (!podWindow) {
+alert("Please allow pop-ups to download the proof of delivery.");
+return;
+}
+
+const deliveredTime = delivery.delivered_at
+? formatDate(delivery.delivered_at)
+: "Not recorded";
+
+const estimatedTime = delivery.estimated_delivery
+? formatDate(delivery.estimated_delivery)
+: "Not recorded";
+
+podWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+<title>${delivery.tracking_number} - Proof of Delivery</title>
+
+<style>
+* {
+box-sizing: border-box;
+}
+
+body {
+font-family: Arial, sans-serif;
+margin: 0;
+padding: 40px;
+color: #111111;
+background: #ffffff;
+}
+
+.pod {
+max-width: 800px;
+margin: auto;
+}
+
+.header {
+border-bottom: 4px solid #e53935;
+padding-bottom: 20px;
+margin-bottom: 30px;
+}
+
+.company {
+font-size: 30px;
+font-weight: bold;
+margin: 0;
+}
+
+.subtitle {
+color: #e53935;
+font-size: 18px;
+font-weight: bold;
+margin-top: 6px;
+}
+
+.reference {
+margin-top: 25px;
+padding: 15px;
+background: #f3f3f3;
+border-radius: 8px;
+}
+
+.row {
+padding: 11px 0;
+border-bottom: 1px solid #dddddd;
+}
+
+.label {
+font-weight: bold;
+display: inline-block;
+min-width: 180px;
+}
+
+.status {
+color: #e53935;
+font-weight: bold;
+}
+
+.photo-section {
+margin-top: 30px;
+}
+
+.photo-section h2 {
+font-size: 20px;
+}
+
+.photo {
+display: block;
+width: 100%;
+max-width: 550px;
+max-height: 500px;
+object-fit: contain;
+border: 1px solid #dddddd;
+border-radius: 8px;
+margin-top: 15px;
+}
+
+.confirmation {
+margin-top: 30px;
+padding: 15px;
+border-left: 4px solid #e53935;
+background: #f7f7f7;
+}
+
+.footer {
+margin-top: 45px;
+padding-top: 20px;
+border-top: 1px solid #dddddd;
+font-size: 12px;
+color: #666666;
+}
+
+.tagline {
+font-weight: bold;
+margin-top: 6px;
+}
+
+@media print {
+body {
+padding: 20px;
+}
+}
+</style>
+</head>
+
+<body>
+<div class="pod">
+
+<div class="header">
+<p class="company">Richmond Express Couriers</p>
+<div class="subtitle">PROOF OF DELIVERY</div>
+</div>
+
+<div class="reference">
+<strong>Tracking Number:</strong>
+${delivery.tracking_number || ""}
+</div>
+
+<div class="row">
+<span class="label">Delivery Status</span>
+<span class="status">${delivery.status || ""}</span>
+</div>
+
+<div class="row">
+<span class="label">Collection</span>
+${delivery.collection_address || "Not recorded"}
+</div>
+
+<div class="row">
+<span class="label">Delivery</span>
+${delivery.delivery_address || "Not recorded"}
+</div>
+
+<div class="row">
+<span class="label">Estimated Delivery</span>
+${estimatedTime}
+</div>
+
+<div class="row">
+<span class="label">Delivered</span>
+${deliveredTime}
+</div>
+
+<div class="row">
+<span class="label">Received By</span>
+${delivery.received_by || "Not recorded"}
+</div>
+
+${
+delivery.pod_photo
+? `
+<div class="photo-section">
+<h2>Photographic Proof of Delivery</h2>
+
+<img
+class="photo"
+src="${delivery.pod_photo}"
+alt="Proof of Delivery"
+/>
+</div>
+`
+: ""
+}
+
+<div class="confirmation">
+This document confirms that the delivery shown above
+was completed by Richmond Express Couriers.
+</div>
+
+<div class="footer">
+Richmond Express Couriers
+
+<div class="tagline">
+FAST. RELIABLE. DELIVERED.
+</div>
+</div>
+
+</div>
+
+<script>
+window.onload = function() {
+setTimeout(function() {
+window.print();
+}, 800);
+};
+</script>
+
+</body>
+</html>
+`);
+
+podWindow.document.close();
 }
 
 return (
@@ -139,9 +354,7 @@ Tracking Number
 type="text"
 placeholder="Example: REC-1006"
 value={trackingNumber}
-onChange={(e) =>
-setTrackingNumber(e.target.value)
-}
+onChange={(e) => setTrackingNumber(e.target.value)}
 style={{
 width: "100%",
 boxSizing: "border-box",
@@ -193,19 +406,11 @@ padding: "20px",
 borderRadius: "10px",
 }}
 >
-<h2
-style={{
-marginTop: "0",
-}}
->
+<h2 style={{ marginTop: "0" }}>
 {delivery.tracking_number}
 </h2>
 
-<p
-style={{
-fontSize: "18px",
-}}
->
+<p style={{ fontSize: "18px" }}>
 <strong>Status:</strong> {delivery.status}
 </p>
 
@@ -216,8 +421,7 @@ marginBottom: "30px",
 }}
 >
 {stages.map((stage, index) => {
-const complete =
-index <= currentStageIndex;
+const complete = index <= currentStageIndex;
 
 return (
 <div
@@ -278,9 +482,7 @@ fontWeight: complete
 {delivery.estimated_delivery && (
 <p>
 <strong>Estimated delivery:</strong>{" "}
-{formatDate(
-delivery.estimated_delivery
-)}
+{formatDate(delivery.estimated_delivery)}
 </p>
 )}
 
@@ -299,11 +501,7 @@ delivery.estimated_delivery
 )}
 
 {delivery.pod_photo && (
-<div
-style={{
-marginTop: "25px",
-}}
->
+<div style={{ marginTop: "25px" }}>
 <h3>Proof of Delivery</h3>
 
 <img
@@ -318,6 +516,27 @@ marginTop: "12px",
 }}
 />
 </div>
+)}
+
+{delivery.status === "Delivered" && (
+<button
+onClick={downloadPOD}
+style={{
+width: "100%",
+maxWidth: "500px",
+padding: "15px",
+marginTop: "25px",
+backgroundColor: "#e53935",
+color: "#ffffff",
+border: "none",
+borderRadius: "8px",
+fontSize: "16px",
+fontWeight: "bold",
+cursor: "pointer",
+}}
+>
+DOWNLOAD PROOF OF DELIVERY
+</button>
 )}
 </div>
 )}
