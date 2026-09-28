@@ -312,6 +312,11 @@ textAlign: "center",
 marginBottom: "30px",
 }}
 >
+<a href="https://www.richmondexpresscouriers.co.uk/" aria-label="Richmond Express Couriers home">
+<img src="https://images.squarespace-cdn.com/content/v1/6a7c5fbc239cd3610d31d9dd/c463ef62-5223-466c-bd2b-9e4dc583aaf4/B61D1603-CF1C-49A0-940C-BBB395E719A9.png?format=750w" alt="Richmond Express Couriers" style={{width: "260px", maxWidth: "100%", height: "auto", margin: "12px auto 8px"}} />
+</a>
+<p style={{color: "#ffffff", fontSize: "16px", margin: "8px 0 24px"}}>Your delivery. Our priority.</p>
+<a href="https://www.richmondexpresscouriers.co.uk/" style={{color: "#ffffff", textUnderlineOffset: "4px"}}>Back to our website</a>
 <h1
 style={{
 fontSize: "34px",
