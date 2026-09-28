@@ -336,6 +336,36 @@ Track Your Delivery
 </p>
 </div>
 
+<style>{`
+body { margin: 0; background: #09090b; }
+main { box-sizing: border-box; min-height: 100svh !important; background: radial-gradient(ellipse at 50% 0%, #35121c 0%, #101014 42%, #09090b 80%) !important; padding: 28px 20px 56px !important; font-family: Arial, sans-serif; }
+main > div { max-width: 640px !important; }
+main > div > div:first-child { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px !important; }
+main > div > div:first-child > a:first-child img { width: 220px !important; border-radius: 12px; margin: 20px auto 10px !important; }
+main > div > div:first-child > p { color: #b7b7c2 !important; font-size: 14px !important; margin: 6px 0 0 !important; }
+main > div > div:first-child > a:nth-of-type(2) { order: -1; align-self: flex-start; color: #b7b7c2 !important; font-size: 13px; text-decoration: none; padding: 8px 0; }
+main > div > div:first-child > a:nth-of-type(2)::before { content: "←  "; }
+main > div > div:first-child > h1, main > div > div:first-child > p:last-child { display: none; }
+.rec-intro { text-align: center; margin-bottom: 28px; }
+.rec-intro h1 { font-size: clamp(32px, 7vw, 46px); letter-spacing: -1.5px; line-height: 1.1; margin: 0 0 14px; }
+.rec-intro p { color: #b7b7c2; line-height: 1.65; font-size: 16px; max-width: 430px; margin: 0 auto; }
+main form { background: linear-gradient(145deg, #202027, #16161b) !important; border: 1px solid #37313b; border-top: 3px solid #ed1746; border-radius: 20px !important; padding: 30px !important; box-shadow: 0 20px 65px #0005; margin-bottom: 20px !important; }
+main form label { font-size: 14px; margin-bottom: 12px !important; }
+main form input { background: #0f0f14; color: #fff; border: 1px solid #51515d !important; border-radius: 10px !important; padding: 18px 16px !important; margin-bottom: 16px !important; min-height: 58px; }
+main form input::placeholder { color: #92929f; font-size: 15px; }
+main form input:focus { outline: 2px solid #ff496d; outline-offset: 3px; }
+main button { background: #db123c !important; border-radius: 10px !important; min-height: 56px; transition: background .15s ease; }
+main button:hover:not(:disabled) { background: #f0204c !important; }
+main button:disabled { opacity: .65; cursor: wait !important; }
+main a:focus-visible, main button:focus-visible { outline: 2px solid #ff7d98; outline-offset: 4px; }
+.rec-help { text-align: center; color: #a8a8b5; font-size: 13px; line-height: 1.8; margin: 22px 0 30px; }
+.rec-help a { color: #fff; text-underline-offset: 4px; }
+@media(max-width: 480px) { main { padding: 16px 18px 36px !important; } main form { padding: 24px 20px !important; } main > div > div:first-child { margin-bottom: 26px !important; } }
+`}</style>
+<section className="rec-intro" aria-labelledby="tracking-title">
+<h1 id="tracking-title">Track your delivery<span style={{color: "#ed1746"}}>.</span></h1>
+<p>From collection to your doorstep. Enter your tracking number for the latest delivery update.</p>
+</section>
 <form
 onSubmit={trackDelivery}
 style={{
@@ -355,9 +385,9 @@ fontWeight: "bold",
 Tracking Number
 </label>
 
-<input
+<input aria-label="Tracking number" autoCapitalize="characters" spellCheck={false}
 type="text"
-placeholder="Example: REC-1006"
+placeholder="Enter your tracking number"
 value={trackingNumber}
 onChange={(e) => setTrackingNumber(e.target.value)}
 style={{
@@ -389,6 +419,7 @@ cursor: "pointer",
 {loading ? "Tracking..." : "Track Delivery"}
 </button>
 </form>
+<p className="rec-help">Need a hand with your delivery?<br /><a href="tel:07368922515">Call 07368 922515</a><span aria-hidden="true"> &nbsp;·&nbsp; </span><a href="https://wa.me/447368922515">WhatsApp us</a></p>
 
 {error && (
 <div
