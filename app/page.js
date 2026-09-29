@@ -69,6 +69,10 @@ minute: "2-digit",
 });
 }
 
+function escapeHtml(value) {
+return String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+}
+
 function downloadPOD() {
 if (!delivery) return;
 
@@ -89,118 +93,18 @@ const estimatedTime = delivery.estimated_delivery
 
 podWindow.document.write(`
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>${delivery.tracking_number} - Proof of Delivery</title>
+<title>${escapeHtml(delivery.tracking_number)} - Proof of Delivery</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-* {
-box-sizing: border-box;
-}
-
-body {
-font-family: Arial, sans-serif;
-margin: 0;
-padding: 40px;
-color: #111111;
-background: #ffffff;
-}
-
-.pod {
-max-width: 800px;
-margin: auto;
-}
-
-.header {
-border-bottom: 4px solid #e53935;
-padding-bottom: 20px;
-margin-bottom: 30px;
-}
-
-.company {
-font-size: 30px;
-font-weight: bold;
-margin: 0;
-}
-
-.subtitle {
-color: #e53935;
-font-size: 18px;
-font-weight: bold;
-margin-top: 6px;
-}
-
-.reference {
-margin-top: 25px;
-padding: 15px;
-background: #f3f3f3;
-border-radius: 8px;
-}
-
-.row {
-padding: 11px 0;
-border-bottom: 1px solid #dddddd;
-}
-
-.label {
-font-weight: bold;
-display: inline-block;
-min-width: 180px;
-}
-
-.status {
-color: #e53935;
-font-weight: bold;
-}
-
-.photo-section {
-margin-top: 30px;
-}
-
-.photo-section h2 {
-font-size: 20px;
-}
-
-.photo {
-display: block;
-width: 100%;
-max-width: 550px;
-max-height: 500px;
-object-fit: contain;
-border: 1px solid #dddddd;
-border-radius: 8px;
-margin-top: 15px;
-}
-
-.confirmation {
-margin-top: 30px;
-padding: 15px;
-border-left: 4px solid #e53935;
-background: #f7f7f7;
-}
-
-.footer {
-margin-top: 45px;
-padding-top: 20px;
-border-top: 1px solid #dddddd;
-font-size: 12px;
-color: #666666;
-}
-
-.tagline {
-font-weight: bold;
-margin-top: 6px;
-}
-
-@media print {
-body {
-padding: 20px;
-}
-}
+*{box-sizing:border-box}body{font:14px/1.5 Arial,Helvetica,sans-serif;margin:0;padding:32px 24px;color:#20212a;background:#eef0f4}.pod{max-width:800px;margin:auto;background:#fff;border:1px solid #e0e2e7;border-radius:16px;padding:38px}.header{border-bottom:3px solid #d71643;padding-bottom:22px;margin-bottom:22px}.company{font-size:23px;font-weight:700;letter-spacing:-.5px;margin:0}.subtitle{color:#d71643;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:7px}.reference{margin:0 0 16px;padding:14px 16px;background:#f4f4f7;border-radius:8px;font-size:15px}.row{display:grid;grid-template-columns:155px 1fr;gap:20px;padding:11px 0;border-bottom:1px solid #e7e7ed;overflow-wrap:anywhere}.label{font-size:12px;font-weight:700;color:#71717e}.status{color:#167451;font-weight:700}.photo-section{margin-top:22px;break-inside:avoid}.photo-section h2{font-size:15px;margin:0 0 12px}.photo{display:block;width:100%;height:290px;object-fit:contain;background:#f7f7f9;border:1px solid #e0e0e7;border-radius:9px}.confirmation{margin-top:22px;padding:14px 16px;border-left:3px solid #d71643;background:#f7f7f9;font-size:12px;break-inside:avoid}.footer{display:flex;justify-content:space-between;gap:16px;margin-top:24px;padding-top:15px;border-top:1px solid #e7e7ed;font-size:10px;color:#777781}.tagline{font-weight:700;letter-spacing:.5px}.print-toolbar{max-width:800px;margin:0 auto 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:12px;color:#676775}.print-toolbar button{border:0;border-radius:8px;padding:12px 18px;color:#fff;background:#d71643;font-weight:700;cursor:pointer}@media(max-width:540px){body{padding:16px 12px}.pod{padding:24px 20px;border-radius:12px}.company{font-size:20px}.row{grid-template-columns:1fr;gap:4px}.photo{height:260px}.footer{flex-direction:column;gap:6px}.print-toolbar{align-items:flex-start}.print-toolbar span{max-width:170px}}@page{size:A4;margin:15mm}@media print{body{background:#fff;padding:0;font-size:11px}.pod{max-width:none;border:0;border-radius:0;padding:0}.print-toolbar{display:none}.header{padding-bottom:15px;margin-bottom:16px}.row{grid-template-columns:145px 1fr;padding:8px 0}.photo{height:260px}.confirmation{margin-top:16px}.footer{flex-direction:row;margin-top:20px}}
 </style>
 </head>
 
 <body>
+<div class="print-toolbar"><span>Your delivery record, ready to save or print.</span><button type="button" onclick="window.print()">Save as PDF / Print</button></div>
 <div class="pod">
 
 <div class="header">
@@ -210,37 +114,37 @@ padding: 20px;
 
 <div class="reference">
 <strong>Tracking Number:</strong>
-${delivery.tracking_number || ""}
+${escapeHtml(delivery.tracking_number || "")}
 </div>
 
 <div class="row">
 <span class="label">Delivery Status</span>
-<span class="status">${delivery.status || ""}</span>
+<span class="status">${escapeHtml(delivery.status || "")}</span>
 </div>
 
 <div class="row">
 <span class="label">Collection</span>
-${delivery.collection_address || "Not recorded"}
+<span>${escapeHtml(delivery.collection_address || "Not recorded")}</span>
 </div>
 
 <div class="row">
-<span class="label">Delivery</span>
-${delivery.delivery_address || "Not recorded"}
+<span class="label">Destination</span>
+<span>${escapeHtml(delivery.delivery_address || "Not recorded")}</span>
 </div>
 
 <div class="row">
-<span class="label">Estimated Delivery</span>
-${estimatedTime}
+<span class="label">Original estimate</span>
+<span>${estimatedTime}</span>
 </div>
 
 <div class="row">
-<span class="label">Delivered</span>
-${deliveredTime}
+<span class="label">Delivered at</span>
+<span>${deliveredTime}</span>
 </div>
 
 <div class="row">
-<span class="label">Received By</span>
-${delivery.received_by || "Not recorded"}
+<span class="label">Received by</span>
+<span>${escapeHtml(delivery.received_by || "Not recorded")}</span>
 </div>
 
 ${
@@ -251,7 +155,7 @@ delivery.pod_photo
 
 <img
 class="photo"
-src="${delivery.pod_photo}"
+src="${escapeHtml(delivery.pod_photo)}"
 alt="Proof of Delivery"
 />
 </div>
@@ -290,293 +194,22 @@ podWindow.document.close();
 }
 
 return (
-<main
-style={{
-minHeight: "100vh",
-backgroundColor: "#1f1f1f",
-color: "#ffffff",
-padding: "20px",
-fontFamily: "Arial, sans-serif",
-}}
->
-<div
-style={{
-width: "100%",
-maxWidth: "700px",
-margin: "0 auto",
-}}
->
-<div
-style={{
-textAlign: "center",
-marginBottom: "30px",
-}}
->
-<a href="https://www.richmondexpresscouriers.co.uk/" aria-label="Richmond Express Couriers home">
-<img src="https://images.squarespace-cdn.com/content/v1/6a7c5fbc239cd3610d31d9dd/c463ef62-5223-466c-bd2b-9e4dc583aaf4/B61D1603-CF1C-49A0-940C-BBB395E719A9.png?format=750w" alt="Richmond Express Couriers" style={{width: "260px", maxWidth: "100%", height: "auto", margin: "12px auto 8px"}} />
-</a>
-<p style={{color: "#ffffff", fontSize: "16px", margin: "8px 0 24px"}}>Your delivery. Our priority.</p>
-<a href="https://www.richmondexpresscouriers.co.uk/" style={{color: "#ffffff", textUnderlineOffset: "4px"}}>Back to our website</a>
-<h1
-style={{
-fontSize: "34px",
-marginBottom: "8px",
-}}
->
-Richmond Express Couriers
-</h1>
-
-<p
-style={{
-fontSize: "18px",
-marginTop: "0",
-}}
->
-Track Your Delivery
-</p>
-</div>
-
-<style>{`
-body { margin: 0; background: #09090b; }
-main { box-sizing: border-box; min-height: 100svh !important; background: radial-gradient(ellipse at 50% 0%, #35121c 0%, #101014 42%, #09090b 80%) !important; padding: 28px 20px 56px !important; font-family: Arial, sans-serif; }
-main > div { max-width: 640px !important; }
-main > div > div:first-child { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px !important; }
-main > div > div:first-child > a:first-child img { width: 220px !important; border-radius: 12px; margin: 20px auto 10px !important; }
-main > div > div:first-child > p { color: #b7b7c2 !important; font-size: 14px !important; margin: 6px 0 0 !important; }
-main > div > div:first-child > a:nth-of-type(2) { order: -1; align-self: flex-start; color: #b7b7c2 !important; font-size: 13px; text-decoration: none; padding: 8px 0; }
-main > div > div:first-child > a:nth-of-type(2)::before { content: "←  "; }
-main > div > div:first-child > h1, main > div > div:first-child > p:last-child { display: none; }
-.rec-intro { text-align: center; margin-bottom: 28px; }
-.rec-intro h1 { font-size: clamp(32px, 7vw, 46px); letter-spacing: -1.5px; line-height: 1.1; margin: 0 0 14px; }
-.rec-intro p { color: #b7b7c2; line-height: 1.65; font-size: 16px; max-width: 430px; margin: 0 auto; }
-main form { background: linear-gradient(145deg, #202027, #16161b) !important; border: 1px solid #37313b; border-top: 3px solid #ed1746; border-radius: 20px !important; padding: 30px !important; box-shadow: 0 20px 65px #0005; margin-bottom: 20px !important; }
-main form label { font-size: 14px; margin-bottom: 12px !important; }
-main form input { background: #0f0f14; color: #fff; border: 1px solid #51515d !important; border-radius: 10px !important; padding: 18px 16px !important; margin-bottom: 16px !important; min-height: 58px; }
-main form input::placeholder { color: #92929f; font-size: 15px; }
-main form input:focus { outline: 2px solid #ff496d; outline-offset: 3px; }
-main button { background: #db123c !important; border-radius: 10px !important; min-height: 56px; transition: background .15s ease; }
-main button:hover:not(:disabled) { background: #f0204c !important; }
-main button:disabled { opacity: .65; cursor: wait !important; }
-main a:focus-visible, main button:focus-visible { outline: 2px solid #ff7d98; outline-offset: 4px; }
-.rec-help { text-align: center; color: #a8a8b5; font-size: 13px; line-height: 1.8; margin: 22px 0 30px; }
-.rec-help a { color: #fff; text-underline-offset: 4px; }
-@media(max-width: 480px) { main { padding: 16px 18px 36px !important; } main form { padding: 24px 20px !important; } main > div > div:first-child { margin-bottom: 26px !important; } }
-`}</style>
-<section className="rec-intro" aria-labelledby="tracking-title">
-<h1 id="tracking-title">Track your delivery<span style={{color: "#ed1746"}}>.</span></h1>
-<p>From collection to your doorstep. Enter your tracking number for the latest delivery update.</p>
-</section>
-<form
-onSubmit={trackDelivery}
-style={{
-backgroundColor: "#2b2b2b",
-padding: "20px",
-borderRadius: "10px",
-marginBottom: "25px",
-}}
->
-<label
-style={{
-display: "block",
-marginBottom: "8px",
-fontWeight: "bold",
-}}
->
-Tracking Number
-</label>
-
-<input aria-label="Tracking number" autoCapitalize="characters" spellCheck={false}
-type="text"
-placeholder="Enter your tracking number"
-value={trackingNumber}
-onChange={(e) => setTrackingNumber(e.target.value)}
-style={{
-width: "100%",
-boxSizing: "border-box",
-padding: "14px",
-fontSize: "17px",
-marginBottom: "14px",
-borderRadius: "6px",
-border: "1px solid #ccc",
-}}
-/>
-
-<button
-type="submit"
-disabled={loading}
-style={{
-width: "100%",
-padding: "15px",
-border: "none",
-borderRadius: "6px",
-backgroundColor: "#e53935",
-color: "#ffffff",
-fontSize: "17px",
-fontWeight: "bold",
-cursor: "pointer",
-}}
->
-{loading ? "Tracking..." : "Track Delivery"}
-</button>
-</form>
-<p className="rec-help">Need a hand with your delivery?<br /><a href="tel:07368922515">Call 07368 922515</a><span aria-hidden="true"> &nbsp;·&nbsp; </span><a href="https://wa.me/447368922515">WhatsApp us</a></p>
-
-{error && (
-<div
-style={{
-backgroundColor: "#333",
-padding: "15px",
-borderRadius: "8px",
-marginBottom: "20px",
-}}
->
-{error}
-</div>
-)}
-
-{delivery && (
-<div
-style={{
-backgroundColor: "#2b2b2b",
-padding: "20px",
-borderRadius: "10px",
-}}
->
-<h2 style={{ marginTop: "0" }}>
-{delivery.tracking_number}
-</h2>
-
-<p style={{ fontSize: "18px" }}>
-<strong>Status:</strong> {delivery.status}
-</p>
-
-<div
-style={{
-marginTop: "25px",
-marginBottom: "30px",
-}}
->
-{stages.map((stage, index) => {
-const complete = index <= currentStageIndex;
-
-return (
-<div
-key={stage}
-style={{
-display: "flex",
-alignItems: "center",
-marginBottom: "14px",
-}}
->
-<div
-style={{
-width: "30px",
-height: "30px",
-borderRadius: "50%",
-backgroundColor: complete
-? "#e53935"
-: "#555",
-display: "flex",
-alignItems: "center",
-justifyContent: "center",
-marginRight: "12px",
-fontWeight: "bold",
-}}
->
-{complete ? "✓" : ""}
-</div>
-
-<span
-style={{
-fontSize: "17px",
-fontWeight: complete
-? "bold"
-: "normal",
-}}
->
-{stage}
-</span>
-</div>
-);
-})}
-</div>
-
-{delivery.collection_address && (
-<p>
-<strong>Collection:</strong>{" "}
-{delivery.collection_address}
-</p>
-)}
-
-{delivery.delivery_address && (
-<p>
-<strong>Delivery:</strong>{" "}
-{delivery.delivery_address}
-</p>
-)}
-
-{delivery.estimated_delivery && (
-<p>
-<strong>Estimated delivery:</strong>{" "}
-{formatDate(delivery.estimated_delivery)}
-</p>
-)}
-
-{delivery.delivered_at && (
-<p>
-<strong>Delivered:</strong>{" "}
-{formatDate(delivery.delivered_at)}
-</p>
-)}
-
-{delivery.received_by && (
-<p>
-<strong>Received by:</strong>{" "}
-{delivery.received_by}
-</p>
-)}
-
-{delivery.pod_photo && (
-<div style={{ marginTop: "25px" }}>
-<h3>Proof of Delivery</h3>
-
-<img
-src={delivery.pod_photo}
-alt="Proof of delivery"
-style={{
-width: "100%",
-maxWidth: "500px",
-borderRadius: "10px",
-display: "block",
-marginTop: "12px",
-}}
-/>
-</div>
-)}
-
-{delivery.status === "Delivered" && (
-<button
-onClick={downloadPOD}
-style={{
-width: "100%",
-maxWidth: "500px",
-padding: "15px",
-marginTop: "25px",
-backgroundColor: "#e53935",
-color: "#ffffff",
-border: "none",
-borderRadius: "8px",
-fontSize: "16px",
-fontWeight: "bold",
-cursor: "pointer",
-}}
->
-DOWNLOAD PROOF OF DELIVERY
-</button>
-)}
-</div>
-)}
-</div>
-</main>
+<main className="tracking-app">
+<style>{"\nbody{margin:0;background:#09090d} .tracking-app{min-height:100svh;background:radial-gradient(ellipse at top,#27111b,transparent 650px),#09090d;color:#f8f8fb;font:16px/1.6 Arial,Helvetica,sans-serif;padding:28px 24px 64px}.tracking-app *{box-sizing:border-box}.tracking-shell{max-width:940px;margin:auto}.brand-bar{display:flex;justify-content:space-between;align-items:center;gap:24px;border-bottom:1px solid #2c2931;padding-bottom:24px;margin-bottom:38px}.brand-bar img{width:210px;max-width:100%;height:auto;display:block}.back-link{font-size:13px;color:#b8b6c3;text-decoration:none}.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#ef718e;margin:0 0 10px}.intro h1{font-size:clamp(32px,5vw,46px);line-height:1.1;letter-spacing:-1.6px;margin:0 0 14px}.intro h1 span{color:#ef315c}.intro p:last-child{color:#aaa9b7;margin:0 0 26px;max-width:570px}.search-panel{padding:24px;background:#18181f;border:1px solid #34303b;border-radius:16px;margin-bottom:30px}.search-panel label{display:block;font-size:13px;font-weight:700;margin-bottom:10px}.search-row{display:flex;gap:12px}.search-row input{flex:1;min-width:0;width:100%;background:#0c0c12;color:#fff;border:1px solid #494451;border-radius:9px;padding:14px 16px;font:16px Arial;min-height:50px}.search-row input::placeholder{color:#898594}.tracking-app button,.photo-link{font:700 14px/1.4 Arial;cursor:pointer;border-radius:9px;padding:14px 22px;min-height:48px;border:1px solid #ec466c;background:#d71643;color:#fff;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;gap:9px}.tracking-app button:hover:not(:disabled){background:#ee2453}.tracking-app button:disabled{opacity:.6;cursor:wait}.tracking-app :is(a,button,input):focus-visible{outline:3px solid #ff9cb3;outline-offset:4px}.search-hint{font-size:12px;color:#928e9e;margin:10px 0 0}.error-message{border:1px solid #924357;background:#331822;border-radius:12px;padding:16px 20px;margin-bottom:24px}.delivery-result{scroll-margin-top:24px}.result-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:24px}.result-header h2{font-size:30px;line-height:1.1;letter-spacing:-.8px;margin:0}.status-badge{border:1px solid #8b4358;background:#351b28;color:#ffa5bc;padding:7px 13px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}.status-badge.delivered{background:#112b24;color:#8fe0be;border-color:#285c4a}.summary{margin:0 0 25px;padding:20px 22px;border:1px solid #33313c;background:#17171f;border-radius:14px}.summary strong{display:block;font-size:21px;letter-spacing:-.5px;color:#fff}.summary span{display:block;font-size:14px;color:#aaa7b6;margin-top:4px}.timeline{list-style:none;padding:0;margin:0 0 30px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}.timeline li{position:relative;text-align:center;min-width:0;padding:0 3px;font-size:12px;color:#8c8899}.timeline li:before{content:'';position:absolute;height:2px;top:16px;left:0;right:0;background:#34313e}.timeline li:first-child:before{left:50%}.timeline li:last-child:before{right:50%}.timeline li.complete:before{background:#bf2a4c}.step-dot{position:relative;display:flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 auto 9px;border:1px solid #45414e;background:#1b1923;border-radius:50%;font-weight:700;color:#aaa5b7}.complete .step-dot{background:#d71643;border-color:#d71643;color:white}.timeline li.current .step-dot{box-shadow:0 0 0 4px #d7164326}.timeline .complete{color:#eeecf4}.detail-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px}.detail-card{background:#17171e;border:1px solid #302d38;border-radius:16px;padding:24px;min-width:0}.detail-card h3{font-size:17px;margin:0 0 20px;letter-spacing:-.3px}.route-list,.detail-list{margin:0}.route-list>div{position:relative;padding-left:24px}.route-list>div:before{content:'';position:absolute;left:0;top:7px;width:8px;height:8px;border:2px solid #ed4269;border-radius:50%}.route-list>div+div{margin-top:24px}.route-list>div:first-child:after{content:'';position:absolute;top:24px;bottom:-19px;left:5px;width:1px;background:#44404d}.tracking-app dt{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#9691a3;margin:0 0 6px}.tracking-app dd{margin:0;color:#f0edf7;font-size:15px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}.detail-list>div+div{border-top:1px solid #302d38;padding-top:14px;margin-top:14px}.proof-card{margin-top:18px;display:grid;grid-template-columns:180px 1fr;align-items:center;gap:26px}.proof-image{display:block;width:100%;height:220px;object-fit:contain;background:#0b0b10;border:1px solid #34303c;border-radius:10px}.proof-card h3{margin-bottom:8px}.proof-copy p{font-size:14px;color:#a9a4b5;margin:0 0 18px}.proof-copy .photo-link{background:transparent;border-color:#47414f;color:#ece8f4;font-weight:500;min-height:42px;padding:10px 15px}.proof-actions{display:flex;flex-wrap:wrap;gap:10px}.proof-actions button{width:auto}.download-note{font-size:12px!important;color:#928b9f!important;margin:12px 0 0!important}.help-footer{margin-top:32px;border-top:1px solid #2e2835;padding-top:22px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:#9f98ab}.help-footer p{margin:0}.help-footer a{color:#e9e2f2;text-underline-offset:4px}.help-links{display:flex;gap:20px}.empty-proof{grid-template-columns:1fr}.tracking-app .subtle{color:#a9a4b5;font-size:14px}\n@media(max-width:600px){.tracking-app{padding:20px 18px 38px}.brand-bar{align-items:flex-start;flex-direction:column;gap:16px;margin-bottom:28px;padding-bottom:20px}.brand-bar img{width:190px}.back-link{order:-1}.intro p:last-child{font-size:14px}.search-panel{padding:18px;margin-bottom:26px}.search-row{flex-direction:column;gap:10px}.search-row button{width:100%}.result-header h2{font-size:27px}.detail-grid{grid-template-columns:1fr;gap:14px}.detail-card{padding:20px}.summary{padding:18px}.summary strong{font-size:20px}.timeline{margin-bottom:26px}.timeline li{font-size:11px}.proof-card{grid-template-columns:1fr;gap:18px}.proof-image{height:230px}.proof-actions{flex-direction:column}.proof-actions>*{width:100%!important}.help-footer{display:block}.help-links{margin-top:10px}.result-header{align-items:center}.eyebrow{font-size:10px}.empty-proof{gap:0}}\n"}</style>
+<div className="tracking-shell">
+<header className="brand-bar"><a href="https://www.richmondexpresscouriers.co.uk/" aria-label="Richmond Express Couriers home"><img src="https://images.squarespace-cdn.com/content/v1/6a7c5fbc239cd3610d31d9dd/c463ef62-5223-466c-bd2b-9e4dc583aaf4/B61D1603-CF1C-49A0-940C-BBB395E719A9.png?format=750w" alt="Richmond Express Couriers" /></a><a className="back-link" href="https://www.richmondexpresscouriers.co.uk/">← Back to our website</a></header>
+<section className="intro" aria-labelledby="tracking-title"><p className="eyebrow">Your delivery. Our priority.</p><h1 id="tracking-title">Track your delivery<span>.</span></h1><p>From collection to completion. Enter your reference for the latest update and proof of delivery.</p></section>
+<form className="search-panel" onSubmit={trackDelivery}><label htmlFor="tracking-number">Tracking number</label><div className="search-row"><input id="tracking-number" aria-label="Tracking number" aria-describedby="tracking-hint" autoCapitalize="characters" spellCheck={false} type="text" placeholder="e.g. REC-1010" value={trackingNumber} onChange={e=>setTrackingNumber(e.target.value)} /><button type="submit" disabled={loading}>{loading ? "Finding delivery…" : "Track delivery"}</button></div><p className="search-hint" id="tracking-hint">You’ll find this reference in your delivery confirmation.</p></form>
+{error && <div className="error-message" role="alert">{error}</div>}
+<div aria-live="polite" aria-busy={loading}>
+{delivery && <section className="delivery-result" aria-labelledby="delivery-reference">
+<header className="result-header"><div><p className="eyebrow">Delivery overview</p><h2 id="delivery-reference">{delivery.tracking_number}</h2></div><span className={"status-badge"+(delivery.status === "Delivered" ? " delivered" : "")}>{delivery.status === "Delivered" ? "✓ Delivered" : delivery.status || "Awaiting update"}</span></header>
+<div className="summary"><strong>{delivery.status === "Delivered" ? "Your delivery is complete." : delivery.status === "In Transit" ? "Your delivery is on the road." : delivery.status === "Collected" ? "Your goods have been collected." : delivery.status === "Booked" ? "Your delivery is booked." : "Your latest delivery update."}</strong><span>{delivery.status === "Delivered" ? (delivery.delivered_at ? "Delivered " + formatDate(delivery.delivered_at) : "Delivery confirmed") : delivery.estimated_delivery ? "Estimated delivery: " + formatDate(delivery.estimated_delivery) : "Check back here for the latest progress."}</span></div>
+<ol className="timeline" aria-label="Delivery progress">{stages.map((stage,index)=><li key={stage} className={(index<=currentStageIndex ? "complete " : "")+(index===currentStageIndex ? "current" : "")} aria-current={index===currentStageIndex ? "step" : undefined}><span className="step-dot" aria-hidden="true">{index<=currentStageIndex ? "✓" : index+1}</span><span>{stage}</span></li>)}</ol>
+<div className="detail-grid"><section className="detail-card"><h3>Delivery route</h3><dl className="route-list"><div><dt>Collection</dt><dd>{delivery.collection_address || "Not recorded"}</dd></div><div><dt>Destination</dt><dd>{delivery.delivery_address || "Not recorded"}</dd></div></dl></section><section className="detail-card"><h3>Delivery details</h3><dl className="detail-list">{delivery.status === "Delivered" && <div><dt>Delivered at</dt><dd>{delivery.delivered_at ? formatDate(delivery.delivered_at) : "Not recorded"}</dd></div>}{delivery.received_by && <div><dt>Received by</dt><dd>{delivery.received_by}</dd></div>}<div><dt>{delivery.status === "Delivered" ? "Original estimate" : "Estimated delivery"}</dt><dd>{delivery.estimated_delivery ? formatDate(delivery.estimated_delivery) : "To be confirmed"}</dd></div></dl></section></div>
+{(delivery.pod_photo || delivery.status === "Delivered") && <section className={"detail-card proof-card"+(!delivery.pod_photo ? " empty-proof" : "")}>{delivery.pod_photo && <a href={delivery.pod_photo} target="_blank" rel="noopener noreferrer" aria-label="Open full-size proof of delivery photo"><img className="proof-image" src={delivery.pod_photo} alt="Photographic proof of delivery" /></a>}<div className="proof-copy"><p className="eyebrow">Delivery confirmation</p><h3>Proof of delivery</h3><p>{delivery.pod_photo ? "View the original photograph or save a copy of your delivery record." : "Save a copy of your delivery record. No photograph has been added."}</p><div className="proof-actions">{delivery.status === "Delivered" && <button type="button" onClick={downloadPOD}>Download proof of delivery</button>}{delivery.pod_photo && <a className="photo-link" href={delivery.pod_photo} target="_blank" rel="noopener noreferrer">View full photo ↗</a>}</div>{delivery.status === "Delivered" && <p className="download-note">Opens a print-friendly document you can save as PDF.</p>}</div></section>}
+</section>}
+</div><footer className="help-footer"><p>Need a hand with your delivery?</p><div className="help-links"><a href="tel:07368922515">Call 07368 922515</a><a href="https://wa.me/447368922515">WhatsApp us</a></div></footer>
+</div></main>
 );
 }
