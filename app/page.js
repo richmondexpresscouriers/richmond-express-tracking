@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -14,12 +14,24 @@ const [delivery, setDelivery] = useState(null);
 const [error, setError] = useState("");
 const [loading, setLoading] = useState(false);
 
-async function trackDelivery(e) {
+useEffect(() => {
+const reference = new URLSearchParams(window.location.search).get("ref");
+if (reference?.trim()) {
+setTrackingNumber(reference.trim().toUpperCase());
+lookupDelivery(reference);
+}
+}, []);
+
+function trackDelivery(e) {
 e.preventDefault();
+lookupDelivery(trackingNumber);
+}
+
+async function lookupDelivery(reference) {
 setLoading(true);
 setError("");
 setDelivery(null);
-const number = trackingNumber.trim().toUpperCase();
+const number = reference.trim().toUpperCase();
 if (!number) {
 setError("Enter your tracking reference, for example REC-1010. You’ll find it in your delivery confirmation.");
 setLoading(false);
