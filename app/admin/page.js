@@ -7,6 +7,8 @@ export default function AdminPage() {
 const [deliveries, setDeliveries] = useState([]);
 const [loading, setLoading] = useState(false);
 const [message, setMessage] = useState("");
+const [createdTracking, setCreatedTracking] = useState("");
+const [copyFallback, setCopyFallback] = useState("");
 
 const [customerName, setCustomerName] = useState("");
 const [customerPhone, setCustomerPhone] = useState("");
@@ -77,6 +79,25 @@ return "REC-1001";
 return `REC-${String(lastNumber + 1).padStart(4, "0")}`;
 }
 
+function trackingLink(reference) {
+return "https://track.richmondexpresscouriers.co.uk/?ref=" + encodeURIComponent(reference);
+}
+
+async function copyTracking(reference, includeMessage = false) {
+const link = trackingLink(reference);
+const text = includeMessage
+? "Richmond Express Couriers\nYour delivery reference: " + reference + "\nTrack your delivery and view the latest updates here:\n" + link + "\nNeed help? Call 07368 922515."
+: link;
+setCopyFallback("");
+try {
+await navigator.clipboard.writeText(text);
+setMessage((includeMessage ? "Customer message" : "Tracking link") + " copied for " + reference + ". Paste it into your email or WhatsApp message.");
+} catch {
+setCopyFallback(text);
+setMessage("Automatic copying is unavailable. Select and copy the text below.");
+}
+}
+
 async function addDelivery(e) {
 e.preventDefault();
 
@@ -107,6 +128,7 @@ setLoading(false);
 return;
 }
 
+setCreatedTracking(trackingNumber);
 setCustomerName("");
 setCustomerPhone("");
 setCustomerEmail("");
@@ -271,6 +293,8 @@ return (
 <button type="button" aria-pressed={activePanel === "update"} onClick={()=>setActivePanel("update")}>Update delivery</button>
 </nav>
 {message && <div className="notice" role="status" aria-live="polite">{message}</div>}
+{copyFallback && <label style={{marginBottom:22}}>Copy this text<textarea readOnly value={copyFallback} onFocus={e=>e.target.select()} /></label>}
+{createdTracking && <section className="notice" aria-label="New delivery tracking link"><h3>{createdTracking} — ready to share</h3><p className="hint">Copy the link or customer message into your booking confirmation. The link opens this delivery automatically.</p><div className="actions"><button type="button" onClick={()=>copyTracking(createdTracking)}>Copy tracking link</button><button type="button" onClick={()=>copyTracking(createdTracking,true)}>Copy customer message</button><a className="link-button quiet" href={trackingLink(createdTracking)} target="_blank" rel="noopener noreferrer">Open customer tracking</a><button type="button" className="quiet" onClick={()=>setCreatedTracking("")}>Dismiss</button></div></section>}
 <section hidden={activePanel !== "add"} className="panel">
 <div className="section-head"><div><h2>New delivery</h2><p className="muted">Add the job details. A tracking number is created automatically.</p></div></div>
 <form onSubmit={addDelivery}>
@@ -318,7 +342,7 @@ return (
 {delivery.delivery_notes && <p className="hint">Notes: {delivery.delivery_notes}</p>}
 {delivery.received_by && <p className="hint">Received by {delivery.received_by}</p>}
 {delivery.pod_photo && <p className="hint">Proof of delivery available</p>}
-<div className="actions"><button type="button" className="primary" disabled={loading} onClick={()=>selectDelivery(delivery)}>Update delivery</button></div>
+<div className="actions"><button type="button" className="primary" disabled={loading} onClick={()=>selectDelivery(delivery)}>Update delivery</button><button type="button" onClick={()=>copyTracking(delivery.tracking_number)}>Copy tracking link</button><button type="button" onClick={()=>copyTracking(delivery.tracking_number,true)}>Copy customer message</button><a className="link-button quiet" href={trackingLink(delivery.tracking_number)} target="_blank" rel="noopener noreferrer">Open customer tracking</a></div>
 </article>)}</div>}
 </section>
 </div>
