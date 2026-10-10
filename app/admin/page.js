@@ -9,6 +9,7 @@ const [loading, setLoading] = useState(false);
 const [message, setMessage] = useState("");
 const [createdTracking, setCreatedTracking] = useState("");
 const [copyFallback, setCopyFallback] = useState("");
+const [showDeleted, setShowDeleted] = useState(false);
 
 const [customerName, setCustomerName] = useState("");
 const [customerPhone, setCustomerPhone] = useState("");
@@ -266,11 +267,40 @@ await supabase.auth.signOut();
 window.location.href = "/login";
 }
 
+async function changeDeletedState(delivery, restore = false) {
+if (loading) return;
+if (!restore && !window.confirm(`Delete job ${delivery.tracking_number}?\n\nIt will disappear from your active jobs and customer tracking. You can restore it from Deleted jobs.`)) return;
+setLoading(true);
+setMessage("");
+try {
+const { data, error } = await supabase.from("Deliveries")
+.update({ deleted_at: restore ? null : new Date().toISOString() })
+.eq("id", delivery.id).select("id").maybeSingle();
+if (error) throw error;
+if (!data) throw new Error("The job could not be changed. Refresh the page and check your access.");
+if (selectedTracking === delivery.tracking_number) {
+setSelectedTracking("");
+setExistingPod("");
+setPodFile(null);
+}
+if (createdTracking === delivery.tracking_number) setCreatedTracking("");
+setCopyFallback("");
+setMessage(`${delivery.tracking_number} ${restore ? "restored" : "moved to Deleted jobs"}.`);
+await loadDeliveries();
+} catch (error) {
+setMessage(`Could not ${restore ? "restore" : "delete"} job: ${error.message}`);
+} finally {
+setLoading(false);
+}
+}
+
 const [activePanel, setActivePanel] = useState("deliveries");
 const [search, setSearch] = useState("");
 const [statusFilter, setStatusFilter] = useState("All");
 const statuses = ["Booked", "Collected", "In Transit", "Delivered"];
-const visibleDeliveries = deliveries.filter((delivery) => {
+const activeDeliveries = deliveries.filter(delivery => !delivery.deleted_at);
+const listedDeliveries = deliveries.filter(delivery => Boolean(delivery.deleted_at) === showDeleted);
+const visibleDeliveries = listedDeliveries.filter((delivery) => {
 const matchesStatus = statusFilter === "All" || (statusFilter === "Active" ? delivery.status !== "Delivered" : delivery.status === statusFilter);
 const query = search.trim().toLowerCase();
 return matchesStatus && [delivery.tracking_number, delivery.customer_name, delivery.customer_phone, delivery.customer_email, delivery.collection_address, delivery.delivery_address].some(value => String(value || "").toLowerCase().includes(query));
@@ -285,7 +315,7 @@ return (
 <div className="actions"><a className="link-button quiet" href="/" target="_blank" rel="noreferrer">View tracking page</a><button className="quiet" type="button" onClick={signOut}>Sign out</button></div>
 </header>
 <div className="stats" aria-label="Delivery totals">
-{[{label:"Total deliveries", count:deliveries.length},{label:"Awaiting collection",count:deliveries.filter(d=>d.status === "Booked").length},{label:"On the road",count:deliveries.filter(d=>["Collected","In Transit"].includes(d.status)).length},{label:"Delivered",count:deliveries.filter(d=>d.status === "Delivered").length}].map(item=><div className="stat" key={item.label}><span>{item.label}</span><strong>{item.count}</strong></div>)}
+{[{label:"Total deliveries", count:activeDeliveries.length},{label:"Awaiting collection",count:activeDeliveries.filter(d=>d.status === "Booked").length},{label:"On the road",count:activeDeliveries.filter(d=>["Collected","In Transit"].includes(d.status)).length},{label:"Delivered",count:activeDeliveries.filter(d=>d.status === "Delivered").length}].map(item=><div className="stat" key={item.label}><span>{item.label}</span><strong>{item.count}</strong></div>)}
 </div>
 <nav className="tabs" aria-label="Dashboard sections">
 <button type="button" aria-pressed={activePanel === "deliveries"} onClick={()=>setActivePanel("deliveries")}>Deliveries</button>
@@ -328,10 +358,11 @@ return (
 </form>}
 </section>
 <section hidden={activePanel !== "deliveries"}>
-<div className="section-head"><div><h2>Your deliveries</h2><p className="muted">Find a job and keep its progress up to date.</p></div><button type="button" className="primary" onClick={()=>setActivePanel("add")}>+ New delivery</button></div>
+<div className="section-head"><div><h2>{showDeleted ? "Deleted jobs" : "Your deliveries"}</h2><p className="muted">Find a job and keep its progress up to date.</p></div><button type="button" className="primary" onClick={()=>setActivePanel("add")}>+ New delivery</button></div>
 <div className="filters"><label>Search deliveries<input type="search" placeholder="Tracking number, customer or address" value={search} onChange={e=>setSearch(e.target.value)} /></label><label>Status<select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>{["All","Active",...statuses].map(item=><option key={item} value={item}>{item === "All" ? "All statuses" : item === "Active" ? "Active deliveries" : item}</option>)}</select></label></div>
-<p className="hint">{visibleDeliveries.length} of {deliveries.length} deliveries</p>
-{visibleDeliveries.length === 0 ? <div className="empty"><h3>{deliveries.length ? "No matching deliveries" : "No deliveries yet"}</h3><p className="muted">{deliveries.length ? "Try another search or choose a different status." : "Create your first delivery to get started."}</p><button type="button" onClick={()=>{if(deliveries.length){setSearch("");setStatusFilter("All");}else{setActivePanel("add");}}}>{deliveries.length ? "Clear filters" : "Create a delivery"}</button></div> :
+<button type="button" className="quiet" disabled={loading} onClick={()=>{setShowDeleted(!showDeleted);setSearch("");setStatusFilter("All");}}>{showDeleted ? "Back to active jobs" : "Deleted jobs"}</button>
+<p className="hint">{visibleDeliveries.length} of {listedDeliveries.length} {showDeleted ? "deleted jobs" : "deliveries"}</p>
+{visibleDeliveries.length === 0 ? <div className="empty"><h3>{showDeleted ? "No deleted jobs found" : listedDeliveries.length ? "No matching deliveries" : "No deliveries yet"}</h3><p className="muted">{showDeleted ? "Jobs you delete will appear here and can be restored." : listedDeliveries.length ? "Try another search or choose a different status." : "Create your first delivery to get started."}</p><button type="button" onClick={()=>{if(deliveries.length){setSearch("");setStatusFilter("All");}else{setActivePanel("add");}}}>{deliveries.length ? "Clear filters" : "Create a delivery"}</button></div> :
 <div className="jobs">{visibleDeliveries.map(delivery=><article className={"job" + (selectedTracking === delivery.tracking_number ? " selected" : "")} key={delivery.id || delivery.tracking_number}>
 <div className="job-top"><h3>{delivery.tracking_number}</h3><span className="badge" data-status={delivery.status}>{delivery.status || "Booked"}</span></div>
 <p className="muted">{delivery.customer_name || "Customer not specified"}</p>
@@ -342,7 +373,7 @@ return (
 {delivery.delivery_notes && <p className="hint">Notes: {delivery.delivery_notes}</p>}
 {delivery.received_by && <p className="hint">Received by {delivery.received_by}</p>}
 {delivery.pod_photo && <p className="hint">Proof of delivery available</p>}
-<div className="actions"><button type="button" className="primary" disabled={loading} onClick={()=>selectDelivery(delivery)}>Update delivery</button><button type="button" onClick={()=>copyTracking(delivery.tracking_number)}>Copy tracking link</button><button type="button" onClick={()=>copyTracking(delivery.tracking_number,true)}>Copy customer message</button><a className="link-button quiet" href={trackingLink(delivery.tracking_number)} target="_blank" rel="noopener noreferrer">Open customer tracking</a></div>
+<div className="actions">{delivery.deleted_at ? <button type="button" disabled={loading} onClick={()=>changeDeletedState(delivery,true)}>Restore job</button> : <><button type="button" className="primary" disabled={loading} onClick={()=>selectDelivery(delivery)}>Update delivery</button><button type="button" onClick={()=>copyTracking(delivery.tracking_number)}>Copy tracking link</button><button type="button" onClick={()=>copyTracking(delivery.tracking_number,true)}>Copy customer message</button><a className="link-button quiet" href={trackingLink(delivery.tracking_number)} target="_blank" rel="noopener noreferrer">Open customer tracking</a><button type="button" className="quiet" style={{color:"#ff91a9",borderColor:"#94364e"}} disabled={loading} onClick={()=>changeDeletedState(delivery)}>Delete job</button></>}</div>
 </article>)}</div>}
 </section>
 </div>
