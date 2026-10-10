@@ -38,7 +38,7 @@ setLoading(false);
 return;
 }
 try {
-const { data, error } = await supabase.from("Deliveries").select("*").eq("tracking_number", number).maybeSingle();
+const { data, error } = await supabase.from("Deliveries").select("*").eq("tracking_number", number).is("deleted_at", null).maybeSingle();
 if (error) throw error;
 if (!data) {
 setError("We couldn’t find that delivery. Check the reference in your confirmation, including the REC- prefix, and try again. If you’ve just booked, the tracking record may not be available yet.");
